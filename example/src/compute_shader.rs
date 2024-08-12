@@ -30,20 +30,21 @@ pub mod bind_groups {
         ],
     };
     impl BindGroup0 {
-        /// This gets the inner bindgroup.
-        ///
-        /// That allows you to reuse the same bindgroup in different shaders, and allows for better interoperability, since its a type-erased wgpu type.
-        ///
-        /// However this will sidestep some of the safeties provided if you use the [`BindGroups::set`] method instead.
-        pub fn unsafe_get_bindgroup(self) -> wgpu::BindGroup {
-            self.0
-        }
         pub fn get_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
             device.create_bind_group_layout(&LAYOUT_DESCRIPTOR0)
         }
-        pub fn from_bindings(device: &wgpu::Device, bindings: BindGroupLayout0) -> Self {
-            let bind_group_layout = device.create_bind_group_layout(&LAYOUT_DESCRIPTOR0);
-            let bind_group = device
+        /// This gets you a bindgroup with customizable layout.
+        ///
+        /// That allows you to reuse the same bindgroup in different shaders, and allows for better interoperability, since it returns a type-erased wgpu type.
+        ///
+        /// However this will sidestep some of the safeties provided if you use the [`BindGroups::set`] method instead.
+        pub fn unsafe_get_bind_group(
+            device: &wgpu::Device,
+            bindings: BindGroupLayout0,
+            layout: &wgpu::BindGroupLayoutDescriptor,
+        ) -> wgpu::BindGroup {
+            let bind_group_layout = device.create_bind_group_layout(layout);
+            device
                 .create_bind_group(
                     &wgpu::BindGroupDescriptor {
                         layout: &bind_group_layout,
@@ -55,7 +56,14 @@ pub mod bind_groups {
                         ],
                         label: None,
                     },
-                );
+                )
+        }
+        pub fn from_bindings(device: &wgpu::Device, bindings: BindGroupLayout0) -> Self {
+            let bind_group = Self::unsafe_get_bind_group(
+                device,
+                bindings,
+                &LAYOUT_DESCRIPTOR0,
+            );
             Self(bind_group)
         }
         pub fn set<'a>(&'a self, render_pass: &mut wgpu::ComputePass<'a>) {

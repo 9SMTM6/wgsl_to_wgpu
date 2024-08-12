@@ -317,28 +317,28 @@ fn bind_group(group_no: u32, group: &GroupData, shader_stages: wgpu::ShaderStage
 
     quote! {
         impl #bind_group_name {
-            /// This gets the inner bindgroup.
-            /// 
-            /// That allows you to reuse the same bindgroup in different shaders, and allows for better interoperability, since its a type-erased wgpu type.
-            /// 
-            /// However this will sidestep some of the safeties provided if you use the [`BindGroups::set`] method instead.
-            pub fn unsafe_get_bindgroup(self) -> wgpu::BindGroup {
-                self.0
-            }
-
             pub fn get_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
                 device.create_bind_group_layout(&#layout_descriptor_name)
             }
 
-            pub fn from_bindings(device: &wgpu::Device, bindings: #bind_group_layout_name) -> Self {
-                let bind_group_layout = device.create_bind_group_layout(&#layout_descriptor_name);
-                let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            /// This gets you a bindgroup with customizable layout.
+            /// 
+            /// That allows you to reuse the same bindgroup in different shaders, and allows for better interoperability, since it returns a type-erased wgpu type.
+            /// 
+            /// However this will sidestep some of the safeties provided if you use the [`BindGroups::set`] method instead.
+            pub fn unsafe_get_bind_group(device: &wgpu::Device, bindings: #bind_group_layout_name, layout: &wgpu::BindGroupLayoutDescriptor) -> wgpu::BindGroup {
+                let bind_group_layout = device.create_bind_group_layout(&layout);
+                device.create_bind_group(&wgpu::BindGroupDescriptor {
                     layout: &bind_group_layout,
                     entries: &[
                         #(#entries),*
                     ],
                     label: None,
-                });
+                })
+            }
+
+            pub fn from_bindings(device: &wgpu::Device, bindings: #bind_group_layout_name) -> Self {
+                let bind_group = Self::unsafe_get_bind_group(device, bindings, &#layout_descriptor_name);
                 Self(bind_group)
             }
 
