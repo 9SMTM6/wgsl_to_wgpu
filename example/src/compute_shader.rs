@@ -30,6 +30,14 @@ pub mod bind_groups {
         ],
     };
     impl BindGroup0 {
+        /// This gets the inner bindgroup.
+        ///
+        /// That allows you to reuse the same bindgroup in different shaders, and allows for better interoperability, since its a type-erased wgpu type.
+        ///
+        /// However this will sidestep some of the safeties provided if you use the [`BindGroups::set`] method instead.
+        pub fn unsafe_get_bindgroup(self) -> wgpu::BindGroup {
+            self.0
+        }
         pub fn get_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
             device.create_bind_group_layout(&LAYOUT_DESCRIPTOR0)
         }
