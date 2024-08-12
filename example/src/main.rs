@@ -147,7 +147,7 @@ impl State {
         // Use the generated types to ensure the correct bind group is assigned to each slot.
         let bind_group0 = shader::bind_groups::BindGroup0::from_bindings(
             &device,
-            shader::bind_groups::BindGroupLayout0 {
+            shader::bind_groups::BindGroupEntries0 {
                 color_texture: &view,
                 color_sampler: &sampler,
             },
@@ -173,7 +173,7 @@ impl State {
 
         let bind_group1 = shader::bind_groups::BindGroup1::from_bindings(
             &device,
-            shader::bind_groups::BindGroupLayout1 {
+            shader::bind_groups::BindGroupEntries1 {
                 uniforms: uniforms_buffer.as_entire_buffer_binding(),
             },
         );
@@ -202,7 +202,7 @@ impl State {
         // Applications that create offsets into storage buffers should use encase::StorageBuffer.
         let compute_bind_group = compute_shader::bind_groups::BindGroup0::from_bindings(
             &device,
-            compute_shader::bind_groups::BindGroupLayout0 {
+            compute_shader::bind_groups::BindGroupEntries0 {
                 uniforms: uniforms_buffer.as_entire_buffer_binding(),
             },
         );

@@ -34,40 +34,49 @@ pub mod bind_groups {
     #[derive(Debug)]
     pub struct BindGroup0(wgpu::BindGroup);
     #[derive(Debug)]
-    pub struct BindGroupLayout0<'a> {
+    pub struct BindGroupEntries0<'a> {
         pub color_texture: &'a wgpu::TextureView,
         pub color_sampler: &'a wgpu::Sampler,
     }
-    const LAYOUT_DESCRIPTOR0: wgpu::BindGroupLayoutDescriptor = wgpu::BindGroupLayoutDescriptor {
-        label: Some("LayoutDescriptor0"),
-        entries: &[
-            wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-                ty: wgpu::BindingType::Texture {
-                    sample_type: wgpu::TextureSampleType::Float {
-                        filterable: true,
-                    },
-                    view_dimension: wgpu::TextureViewDimension::D2,
-                    multisampled: false,
-                },
-                count: None,
-            },
-            wgpu::BindGroupLayoutEntry {
-                binding: 1,
-                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-                ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                count: None,
-            },
-        ],
-    };
     impl BindGroup0 {
+        pub const LAYOUT_DESCRIPTOR: wgpu::BindGroupLayoutDescriptor<'static> = wgpu::BindGroupLayoutDescriptor {
+            label: Some("LayoutDescriptor0"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float {
+                            filterable: true,
+                        },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    count: None,
+                },
+            ],
+        };
         pub fn get_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
-            device.create_bind_group_layout(&LAYOUT_DESCRIPTOR0)
+            device.create_bind_group_layout(&Self::LAYOUT_DESCRIPTOR)
         }
-        pub fn from_bindings(device: &wgpu::Device, bindings: BindGroupLayout0) -> Self {
-            let bind_group_layout = device.create_bind_group_layout(&LAYOUT_DESCRIPTOR0);
-            let bind_group = device
+        /// This gets you a bindgroup with customizable layout.
+        ///
+        /// That allows you to reuse the same bindgroup in different shaders, and allows for better interoperability, since it returns a type-erased wgpu type.
+        ///
+        /// However this will sidestep some of the safeties provided if you use the [`BindGroups::set`] method instead.
+        pub fn unsafe_get_bind_group(
+            device: &wgpu::Device,
+            bindings: BindGroupEntries0,
+            layout: &wgpu::BindGroupLayoutDescriptor,
+        ) -> wgpu::BindGroup {
+            let bind_group_layout = device.create_bind_group_layout(&layout);
+            device
                 .create_bind_group(
                     &wgpu::BindGroupDescriptor {
                         layout: &bind_group_layout,
@@ -87,7 +96,17 @@ pub mod bind_groups {
                         ],
                         label: Some("BindGroup0"),
                     },
-                );
+                )
+        }
+        pub fn from_bindings(
+            device: &wgpu::Device,
+            bindings: BindGroupEntries0,
+        ) -> Self {
+            let bind_group = Self::unsafe_get_bind_group(
+                device,
+                bindings,
+                &Self::LAYOUT_DESCRIPTOR,
+            );
             Self(bind_group)
         }
         pub fn set<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
@@ -97,31 +116,40 @@ pub mod bind_groups {
     #[derive(Debug)]
     pub struct BindGroup1(wgpu::BindGroup);
     #[derive(Debug)]
-    pub struct BindGroupLayout1<'a> {
+    pub struct BindGroupEntries1<'a> {
         pub uniforms: wgpu::BufferBinding<'a>,
     }
-    const LAYOUT_DESCRIPTOR1: wgpu::BindGroupLayoutDescriptor = wgpu::BindGroupLayoutDescriptor {
-        label: Some("LayoutDescriptor1"),
-        entries: &[
-            wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            },
-        ],
-    };
     impl BindGroup1 {
+        pub const LAYOUT_DESCRIPTOR: wgpu::BindGroupLayoutDescriptor<'static> = wgpu::BindGroupLayoutDescriptor {
+            label: Some("LayoutDescriptor1"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+            ],
+        };
         pub fn get_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
-            device.create_bind_group_layout(&LAYOUT_DESCRIPTOR1)
+            device.create_bind_group_layout(&Self::LAYOUT_DESCRIPTOR)
         }
-        pub fn from_bindings(device: &wgpu::Device, bindings: BindGroupLayout1) -> Self {
-            let bind_group_layout = device.create_bind_group_layout(&LAYOUT_DESCRIPTOR1);
-            let bind_group = device
+        /// This gets you a bindgroup with customizable layout.
+        ///
+        /// That allows you to reuse the same bindgroup in different shaders, and allows for better interoperability, since it returns a type-erased wgpu type.
+        ///
+        /// However this will sidestep some of the safeties provided if you use the [`BindGroups::set`] method instead.
+        pub fn unsafe_get_bind_group(
+            device: &wgpu::Device,
+            bindings: BindGroupEntries1,
+            layout: &wgpu::BindGroupLayoutDescriptor,
+        ) -> wgpu::BindGroup {
+            let bind_group_layout = device.create_bind_group_layout(&layout);
+            device
                 .create_bind_group(
                     &wgpu::BindGroupDescriptor {
                         layout: &bind_group_layout,
@@ -133,7 +161,17 @@ pub mod bind_groups {
                         ],
                         label: Some("BindGroup1"),
                     },
-                );
+                )
+        }
+        pub fn from_bindings(
+            device: &wgpu::Device,
+            bindings: BindGroupEntries1,
+        ) -> Self {
+            let bind_group = Self::unsafe_get_bind_group(
+                device,
+                bindings,
+                &Self::LAYOUT_DESCRIPTOR,
+            );
             Self(bind_group)
         }
         pub fn set<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {

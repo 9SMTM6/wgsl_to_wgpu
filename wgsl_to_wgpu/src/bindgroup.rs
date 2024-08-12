@@ -1,5 +1,6 @@
 use crate::{
-    indexed_name_to_ident, quote_shader_stages, wgsl::buffer_binding_type, CreateModuleError,
+    indexed_name_to_ident, name_to_ident, quote_shader_stages, wgsl::buffer_binding_type,
+    CreateModuleError,
 };
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
@@ -27,15 +28,13 @@ pub fn bind_groups_module(
         .map(|(group_no, group)| {
             let group_name = indexed_name_to_ident("BindGroup", *group_no);
 
-            let layout = bind_group_layout(*group_no, group);
-            let layout_descriptor = bind_group_layout_descriptor(*group_no, group, shader_stages);
+            let layout = bind_group_entries(*group_no, group);
             let group_impl = bind_group(*group_no, group, shader_stages);
 
             quote! {
                 #[derive(Debug)]
                 pub struct #group_name(wgpu::BindGroup);
                 #layout
-                #layout_descriptor
                 #group_impl
             }
         })
@@ -110,7 +109,7 @@ pub fn bind_groups_module(
     }
 }
 
-fn bind_group_layout(group_no: u32, group: &GroupData) -> TokenStream {
+fn bind_group_entries(group_no: u32, group: &GroupData) -> TokenStream {
     let fields: Vec<_> = group
         .bindings
         .iter()
@@ -128,7 +127,7 @@ fn bind_group_layout(group_no: u32, group: &GroupData) -> TokenStream {
         })
         .collect();
 
-    let name = indexed_name_to_ident("BindGroupLayout", group_no);
+    let name = indexed_name_to_ident("BindGroupEntries", group_no);
     quote! {
         #[derive(Debug)]
         pub struct #name<'a> {
@@ -148,10 +147,10 @@ fn bind_group_layout_descriptor(
         .map(|binding| bind_group_layout_entry(binding, shader_stages))
         .collect();
 
-    let name = indexed_name_to_ident("LAYOUT_DESCRIPTOR", group_no);
+    let name = name_to_ident("LAYOUT_DESCRIPTOR");
     let label = format!("LayoutDescriptor{group_no}");
     quote! {
-        const #name: wgpu::BindGroupLayoutDescriptor = wgpu::BindGroupLayoutDescriptor {
+        pub const #name: wgpu::BindGroupLayoutDescriptor<'static> = wgpu::BindGroupLayoutDescriptor {
             label: Some(#label),
             entries: &[
                 #(#entries),*
@@ -310,34 +309,47 @@ fn bind_group(group_no: u32, group: &GroupData, shader_stages: wgpu::ShaderStage
     };
 
     let bind_group_name = indexed_name_to_ident("BindGroup", group_no);
-    let bind_group_layout_name = indexed_name_to_ident("BindGroupLayout", group_no);
+    let bind_group_entry_name = indexed_name_to_ident("BindGroupEntries", group_no);
 
-    let layout_descriptor_name = indexed_name_to_ident("LAYOUT_DESCRIPTOR", group_no);
+    let layout_descriptor_name = name_to_ident("LAYOUT_DESCRIPTOR");
 
     let label = format!("BindGroup{group_no}");
 
-    let group_no = Index::from(group_no as usize);
+    let group_no_idx = Index::from(group_no as usize);
+
+    let layout_descriptor = bind_group_layout_descriptor(group_no, group, shader_stages);
 
     quote! {
         impl #bind_group_name {
+            #layout_descriptor
+
             pub fn get_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
-                device.create_bind_group_layout(&#layout_descriptor_name)
+                device.create_bind_group_layout(&Self::#layout_descriptor_name)
             }
 
-            pub fn from_bindings(device: &wgpu::Device, bindings: #bind_group_layout_name) -> Self {
-                let bind_group_layout = device.create_bind_group_layout(&#layout_descriptor_name);
-                let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            /// This gets you a bindgroup with customizable layout.
+            /// 
+            /// That allows you to reuse the same bindgroup in different shaders, and allows for better interoperability, since it returns a type-erased wgpu type.
+            /// 
+            /// However this will sidestep some of the safeties provided if you use the [`BindGroups::set`] method instead.
+            pub fn unsafe_get_bind_group(device: &wgpu::Device, bindings: #bind_group_entry_name, layout: &wgpu::BindGroupLayoutDescriptor) -> wgpu::BindGroup {
+                let bind_group_layout = device.create_bind_group_layout(&layout);
+                device.create_bind_group(&wgpu::BindGroupDescriptor {
                     layout: &bind_group_layout,
                     entries: &[
                         #(#entries),*
                     ],
                     label: Some(#label),
-                });
+                })
+            }
+
+            pub fn from_bindings(device: &wgpu::Device, bindings: #bind_group_entry_name) -> Self {
+                let bind_group = Self::unsafe_get_bind_group(device, bindings, &Self::#layout_descriptor_name);
                 Self(bind_group)
             }
 
             pub fn set<'a>(&'a self, render_pass: &mut #render_pass) {
-                render_pass.set_bind_group(#group_no, &self.0, &[]);
+                render_pass.set_bind_group(#group_no_idx, &self.0, &[]);
             }
         }
     }
