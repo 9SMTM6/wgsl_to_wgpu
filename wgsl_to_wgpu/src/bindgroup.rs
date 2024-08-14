@@ -333,7 +333,7 @@ fn bind_group(group_no: u32, group: &GroupData, shader_stages: wgpu::ShaderStage
             /// 
             /// However this will sidestep some of the safeties provided if you use the [`BindGroups::set`] method instead.
             pub fn unsafe_get_bind_group(device: &wgpu::Device, bindings: #bind_group_entry_name, layout: &wgpu::BindGroupLayoutDescriptor) -> wgpu::BindGroup {
-                let bind_group_layout = device.create_bind_group_layout(&layout);
+                let bind_group_layout = device.create_bind_group_layout(layout);
                 device.create_bind_group(&wgpu::BindGroupDescriptor {
                     layout: &bind_group_layout,
                     entries: &[

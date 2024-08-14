@@ -75,7 +75,7 @@ pub mod bind_groups {
             bindings: BindGroupEntries0,
             layout: &wgpu::BindGroupLayoutDescriptor,
         ) -> wgpu::BindGroup {
-            let bind_group_layout = device.create_bind_group_layout(&layout);
+            let bind_group_layout = device.create_bind_group_layout(layout);
             device
                 .create_bind_group(
                     &wgpu::BindGroupDescriptor {
@@ -148,7 +148,7 @@ pub mod bind_groups {
             bindings: BindGroupEntries1,
             layout: &wgpu::BindGroupLayoutDescriptor,
         ) -> wgpu::BindGroup {
-            let bind_group_layout = device.create_bind_group_layout(&layout);
+            let bind_group_layout = device.create_bind_group_layout(layout);
             device
                 .create_bind_group(
                     &wgpu::BindGroupDescriptor {
